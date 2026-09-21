@@ -47,6 +47,42 @@ PhonePulse keeps a health record of the phone, fully on-device.
 
 **Wording matters.** The app says *"unusual behavior detected, get it inspected."* It never claims confirmed damage, because a phone cannot see inside itself.
 
+## PhonePulse: User Flow
+
+```mermaid
+flowchart LR
+    A([Install and open PhonePulse]) --> B[Grant sensor and battery permissions]
+    B --> C[Learn per-device baseline]
+    C --> D{Choose mode}
+
+    D -->|Owner| E[Background monitoring<br/>Foreground service + WorkManager]
+    E --> F[Impact log<br/>free-fall then spike]
+    E --> G[Battery, thermal and sensor readings]
+
+    D -->|Buyer| L[90-second active scan<br/>battery, thermals, sensors, speaker/mic, charging]
+
+    F --> H[Autoencoder checks drift from baseline]
+    G --> H
+    L --> H
+
+    H --> I{Anomaly?}
+    I -->|No| J[Device Health: Good]
+    I -->|Yes| K[Local LLM plain-language explanation<br/>with confidence level]
+    K --> Q[Get it inspected]
+
+    J --> M[Signed report<br/>Android Keystore]
+    Q --> M
+    M --> N([Buyer verifies via QR code])
+
+    classDef start fill:#19B394,stroke:#0E8A6B,color:#fff;
+    classDef step fill:#E3F5EE,stroke:#0E8A6B,color:#0C1B3A;
+    classDef decision fill:#FDF0E0,stroke:#F59E0B,color:#0C1B3A;
+    classDef warn fill:#FDECEE,stroke:#E85D6A,color:#0C1B3A;
+    class A,N start;
+    class B,C,E,F,G,L,H,J,M step;
+    class D,I decision;
+    class K,Q warn;
+```
 ## Status
 
 | Component | State | Notes |
