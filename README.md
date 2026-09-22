@@ -12,14 +12,14 @@ Built for the iQOO Hackathon 2026 (Open Innovation track).
 
 1. [Problem](#problem)
 2. [Solution](#solution)
-3. [Status](#status)
-4. [How it works](#how-it-works)
-5. [Features](#features)
+3. [How it works](#how-it-works)
+4. [Features](#features)
+5. [Status](#status)
 6. [The anomaly model](#the-anomaly-model)
 7. [Tech stack](#tech-stack)
 8. [Running on the Snapdragon NPU](#running-on-the-snapdragon-npu)
-9. [Repository structure](#repository-structure)
-10. [Getting started](#getting-started)
+9. [Getting started](#getting-started)
+10. [Repository structure](#repository-structure)
 11. [Limitations](#limitations)
 12. [Existing solutions and gaps](#existing-solutions-and-gaps)
 13. [Roadmap](#roadmap)
@@ -47,7 +47,7 @@ PhonePulse keeps a health record of the phone, fully on-device.
 
 **Wording matters.** The app says *"unusual behavior detected, get it inspected."* It never claims confirmed damage, because a phone cannot see inside itself.
 
-## PhonePulse: User Flow
+## How it works
 
 ```mermaid
 flowchart LR
@@ -74,30 +74,15 @@ flowchart LR
     Q --> M
     M --> N([Buyer verifies via QR code])
 
-    classDef start fill:#19B394,stroke:#0E8A6B,color:#fff;
-    classDef step fill:#E3F5EE,stroke:#0E8A6B,color:#0C1B3A;
-    classDef decision fill:#FDF0E0,stroke:#F59E0B,color:#0C1B3A;
-    classDef warn fill:#FDECEE,stroke:#E85D6A,color:#0C1B3A;
+    classDef start fill:#4F46E5,stroke:#3730A3,color:#fff;
+    classDef step fill:#EEF2FF,stroke:#4F46E5,color:#1E1B4B;
+    classDef decision fill:#FEF3C7,stroke:#D97706,color:#1E1B4B;
+    classDef warn fill:#FEE2E2,stroke:#DC2626,color:#1E1B4B;
     class A,N start;
     class B,C,E,F,G,L,H,J,M step;
     class D,I decision;
     class K,Q warn;
 ```
-## Status
-
-| Component | State | Notes |
-|---|---|---|
-| Anomaly model: synthetic data generator, training, evaluation | Done | `ml/` |
-| TFLite export (float32 and int8) | Done | Both files load and run |
-| Per-device baseline normalization | Done (in the ML pipeline) | On-device calibration logic still to be written in Kotlin |
-| Android app: impact detector, telemetry logger, dashboard | Planned | |
-| NPU inference via LiteRT `CompiledModel` | Planned, untested | Needs the target Snapdragon phone |
-| Local LLM summary (LiteRT-LM) | Planned, untested | Templated-text fallback comes first |
-| Buyer-mode active scan | Planned | |
-| Signed report and QR code | Planned | |
-| Training on real telemetry | Planned | Current model is trained on synthetic data only |
-
-## How it works
 
 ```mermaid
 flowchart LR
@@ -108,6 +93,9 @@ flowchart LR
         D --> E["Local LLM<br/>plain-language summary"]
         E --> F["Signed report<br/>Keystore signature + QR"]
     end
+
+    classDef step fill:#EEF2FF,stroke:#4F46E5,color:#1E1B4B;
+    class A,B,C,D,E,F step;
 ```
 
 **Owner mode** runs continuously: it logs every drop, learns the phone's normal behavior, and flags unusual drift over time.
@@ -125,6 +113,20 @@ flowchart LR
 | Buyer mode | Active scan with confidence levels on each finding. |
 | Signed report | Report signed with a key in the Android Keystore. The QR code carries the signature and a hash so the report can be checked for edits. Note this proves the report was not altered, not that the phone is healthy. |
 | Voice | On-device Android TextToSpeech can read the verdict aloud. |
+
+## Status
+
+| Component | State | Notes |
+|---|---|---|
+| Anomaly model: synthetic data generator, training, evaluation | Done | `ml/` |
+| TFLite export (float32 and int8) | Done | Both files load and run |
+| Per-device baseline normalization | Done (in the ML pipeline) | On-device calibration logic still to be written in Kotlin |
+| Android app: impact detector, telemetry logger, dashboard | Planned | |
+| NPU inference via LiteRT `CompiledModel` | Planned, untested | Needs the target Snapdragon phone |
+| Local LLM summary (LiteRT-LM) | Planned, untested | Templated-text fallback comes first |
+| Buyer-mode active scan | Planned | |
+| Signed report and QR code | Planned | |
+| Training on real telemetry | Planned | Current model is trained on synthetic data only |
 
 ## The anomaly model
 
@@ -184,6 +186,20 @@ Planned approach:
 
 A model this small will not necessarily run faster on the NPU, because call overhead can dominate. The measured latency on screen is what counts, and no speedup is claimed until it is measured. The NPU is expected to matter most for the LLM.
 
+## Getting started
+
+Train the model and regenerate the exports (Python 3.10+):
+
+```bash
+cd ml
+pip install -r requirements.txt
+python train_autoencoder.py
+```
+
+This writes `model.tflite`, `model_int8.tflite`, and `model_meta.json`, and prints AUROC, detection rate, false alarm rate, and the alert threshold.
+
+Android build instructions will be added once the app code is in the repo.
+
 ## Repository structure
 
 ```
@@ -205,20 +221,6 @@ phonepulse/
     ├── ml/                      # LiteRT loader, delegate fallback
     └── ui/                      # dashboard, impact timeline, report
 ```
-
-## Getting started
-
-Train the model and regenerate the exports (Python 3.10+):
-
-```bash
-cd ml
-pip install -r requirements.txt
-python train_autoencoder.py
-```
-
-This writes `model.tflite`, `model_int8.tflite`, and `model_meta.json`, and prints AUROC, detection rate, false alarm rate, and the alert threshold.
-
-Android build instructions will be added once the app code is in the repo.
 
 ## Limitations
 
