@@ -1,0 +1,21 @@
+{
+  "features": [
+    "idle_temp_c",
+    "charge_temp_rise_c",
+    "idle_drain_pct_hr",
+    "voltage_sag_mv",
+    "charge_rate_ma",
+    "accel_noise_std",
+    "gyro_bias",
+    "thermal_headroom"
+  ],
+  "threshold_mse": 1.657835602760315,
+  "calibration_windows": 40,
+  "normalization": "per-device z-score using first 40 windows",
+  "data": "synthetic (prototype); replace with real telemetry",
+  "metrics_synthetic": {
+    "auroc": 0.9986769708333334,
+    "tpr": 0.9886666666666667,
+    "fpr": 0.01235
+  }
+}
